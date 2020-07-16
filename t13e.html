@@ -1,0 +1,262 @@
+<!--
+ Copyright (C) 2020 Stephan Cieszynski
+ 
+ This file is part of JS.
+ 
+ JS is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ JS is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with JS.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <title>WebViewApp-T13E</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body {
+            font-size: medium;
+        }
+
+        textarea,
+        label {
+            display: block;
+            width: 100%;
+            min-height: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="data">
+        <label>Source:<br /> <textarea class="source"></textarea></label>
+        <label>Data: <textarea class="data">{a:range(3,11,2), b:range(10,20,.25), c:range(4,10,2)}</textarea></label>
+        <label>Text: <textarea class="text"></textarea></label>
+        <label>
+            Process <button type="button">OK</button>
+        </label>
+    </form>
+</body>
+<script src="t13e.js"></script>
+<script>
+    "use strict";
+    const text1 = document.querySelector('textarea.source');
+    text1.value = `#{h}:s() werden #{a}:P(p) zum Preis von #{b}:c() angeboten. 
+Wieviel Euro kosten #{c}:P(p)?
+
+#{c}:P(p) kosten #{(b/a)*c}:c()`;
+    const text2 = document.querySelector('textarea.data');
+    text2.value = `{a:range(3,11,2), b:range(50,150,.25), c:range(4,10,2), p:arange([
+["Hosen", "Hose" ,"Hosen"],
+["Paar Schuhe", "Paar Schuhe" ,"Paar Schuhe"],
+["T-Shirts", "T-Shirt" ,"T-Shirts"],
+["Kleider", "Kleid" ,"Kleider"]
+]), h:arange(["In einem Geschäft", "Bei einem Händler", "Im Laden"])}`;
+    const text3 = document.querySelector('textarea.text');
+    const button = document.querySelector('button');
+
+    button.onclick = function (e) {
+        text3.textContent = T13E.format(text1.value, T13E.prepare(text2.value));
+    }
+
+</script>
+<script type="application/bla">
+    "use strict";
+
+
+    const prepare = function (obj, a) {
+        obj.date = Date.now();
+        obj.a = a + 1 || obj.a;
+        obj.i = 0;  // interval
+        obj.r = 0;  // repetitions
+        obj.e = 2.5;  // easiness
+        return obj;
+    }
+
+    // grade: https://github.com/thyagoluciano/sm2
+    // 5 - perfect response
+    // 4 - correct response after a hesitation
+    // 3 - correct response recalled with serious difficulty
+    // 2 - incorrect response; where the correct one seemed easy to recall
+    // 1 - incorrect response; the correct one remembered
+    // 0 - complete blackout.
+    const update = function (obj, grade) {
+        if (obj && grade) {
+            obj.date = Date.now();
+            if (grade >= 3 && grade <= grade) {
+                switch (obj.r) {
+                    case 0:
+                        obj.i = 1;
+                        break;
+                    case 1:
+                        obj.i = 6;
+                        break;
+                    default:
+                        obj.i = Math.floor(obj.i * obj.e);
+
+                }
+                obj.e = obj.e + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+                obj.e = (obj.e > 1.3) ? obj.e : 1.3;
+                obj.r++;
+            }
+
+            if (grade >= 0 && grade <= 2) {
+                obj.i = 1;
+                obj.r = 0;
+            }
+        }
+        return obj;
+    }
+
+    const Quiz = class {
+
+        constructor(name, version) {
+            name = name || 'Quiz';
+            version = version || 1;
+            return new Promise(function (resolve, reject) {
+                const req_open = indexedDB.open(name, version);
+                req_open.onsuccess = function (e) {
+                    this.db = e.target.result;
+                    resolve(this);
+                }.bind(this)
+                req_open.onerror = function (e) { reject(e); }
+                req_open.onupgradeneeded = function (e) {
+                    req_open.onsuccess = null;
+                    this.db = e.target.result;
+                    if (e.oldVersion > 0) {
+                        try { db.deleteObjectStore(name); }
+                        catch (ex) {
+                            reject(new ErrorEvent('DOMException', {
+                                message: ex.message,
+                                error: ex
+                            }));
+                        }
+                    }
+
+                    const store = this.db.createObjectStore(name, { keyPath: "a" });
+                    store.createIndex("interval", ["i", "r", "date"], { unique: false });
+                    store.transaction.oncomplete = function (e) {
+
+                        fetch(`#{name}.json`)
+                            .then(function (response) {
+                                if (!response.ok) {
+                                    throw Error(response.status);
+                                }
+                                return response.json();
+                            })
+                            .then(function (json) {
+                                const objectStore = this.db
+                                    .transaction(name, "readwrite")
+                                    .objectStore(name);
+
+                                objectStore.add({ a: 0, date: null });
+                                for (let a = 0; a < json.length; a++) {
+                                    objectStore.add(prepare(json[a], a));
+                                }
+                                resolve(this);
+                            }.bind(this))
+                            .catch(function (e) {
+                                console.error('CATCH ' + e)
+                            });
+                    }.bind(this)
+
+                }.bind(this)
+            }.bind(this));
+        }
+
+        next(prev, e) {
+            prev = update(prev, e) || { a: 0, date: new Date() };
+            return new Promise(function (resolve) {
+                this.db
+                    .transaction("Quiz", "readwrite")
+                    .objectStore("Quiz")
+                    .put(prev)
+                    .onsuccess = function (e) {
+                        e.target.transaction.db
+                            .transaction("Quiz")
+                            .objectStore("Quiz")
+                            .index("interval")
+                            .openCursor()
+                            .onsuccess = function (e) {
+                                console.log(e.target.result.value.a, prev.a)
+                                if (e.target.result.value.a == prev.a) {
+                                    e.target.result.continue();
+                                } else {
+                                    resolve(e.target.result.value);
+                                }
+                            }
+                    }
+            }.bind(this));
+        }
+
+        reset() {
+            return new Promise(function (resolve) {
+                this.db
+                    .transaction("Quiz", "readwrite")
+                    .objectStore("Quiz")
+                    .index("interval")
+                    .openCursor()
+                    .onsuccess = function (e) {
+                        const cursor = e.target.result;
+                        if (cursor) {
+                            cursor.update(prepare(cursor.value));
+                            cursor.continue();
+                        } else resolve(true);
+                    }.bind(this)
+            }.bind(this));
+        }
+
+        time() {
+            return new Promise(function (resolve) {
+                this.db
+                    .transaction("Quiz")
+                    .objectStore("Quiz")
+                    .get(0)
+                    .onsuccess = function (e) {
+                        resolve(e.target.result.date);
+                    }
+            }.bind(this));
+        }
+    }
+
+    const form = document.forms.data;
+    const output = document.querySelector('output')
+    const quiz = new Quiz();
+
+    form.addEventListener('click', function (e) {
+        quiz.then(function (db) {
+            if (e.target.value == 'R') {
+                db.reset();
+            } else {
+                db.next(JSON.parse(output.value), e.target.value)
+                    .then(function (card) {
+                        output.value = JSON.stringify(card)
+                    })
+            }
+        })
+    })
+
+    quiz
+        .then(function (db) {
+            db.next()
+                .then(function (card) {
+                    output.value = JSON.stringify(card)
+                })
+        })
+        .catch(function (error) {
+            console.error(error)
+        })
+
+</script>
+
+</html>

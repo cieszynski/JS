@@ -32,7 +32,7 @@
         label {
             display: block;
             width: 100%;
-            min-height: 100px;
+            min-height: 25vh;
         }
     </style>
 </head>
@@ -51,17 +51,29 @@
 <script>
     "use strict";
     const text1 = document.querySelector('textarea.source');
-    text1.value = `#{h}:s() werden #{a}:P(p) zum Preis von #{b}:c() angeboten. 
+    text1.value = `#{h}:s() werden #{a}:P(p) zum Preis von #{b}:c(USD) angeboten. 
 Wieviel Euro kosten #{c}:P(p)?
 
-#{c}:P(p) kosten #{(b/a)*c}:c()`;
+#{c}:P(p) kosten #{(b/a)*c}:c(EUR)
+
+Das sind #{c}:u("Teile"). Oder #{c}:n(3) Teile.`;
     const text2 = document.querySelector('textarea.data');
-    text2.value = `{a:range(3,11,2), b:range(50,150,.25), c:range(4,10,2), p:arange([
-["Hosen", "Hose" ,"Hosen"],
-["Paar Schuhe", "Paar Schuhe" ,"Paar Schuhe"],
-["T-Shirts", "T-Shirt" ,"T-Shirts"],
-["Kleider", "Kleid" ,"Kleider"]
-]), h:arange(["In einem Geschäft", "Bei einem Händler", "Im Laden"])}`;
+    text2.value = `{
+    a:range(3,11,2), 
+    b:range(50,150,.25), 
+    c:range(4,10,2), 
+    p:arange([
+        ["Hosen", "Hose" ,"Hosen"],
+        ["Paar Schuhe", "Paar Schuhe" ,"Paar Schuhe"],
+        ["T-Shirts", "T-Shirt" ,"T-Shirts"],
+        ["Kleider", "Kleid" ,"Kleider"]
+    ]), 
+    h:arange([
+        "In einem Geschäft", 
+        "Bei einem Händler", 
+        "Im Laden"
+    ])
+}`;
     const text3 = document.querySelector('textarea.text');
     const button = document.querySelector('button');
 
@@ -69,6 +81,7 @@ Wieviel Euro kosten #{c}:P(p)?
         text3.textContent = T13E.format(text1.value, T13E.prepare(text2.value));
     }
 
+    console.log(T13E.locale)
 </script>
 <script type="application/bla">
     "use strict";

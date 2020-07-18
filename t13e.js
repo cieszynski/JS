@@ -67,10 +67,10 @@ class T13E { // TemplateEngine
             let code = '"use strict";return '
             switch (p3) {
                 case 'c':   // currency
-                    code += `T13E.currency(${p2},'${p4}').replace(/\s+/g, "\u00a0");`;
+                    code += `T13E.currency(${p2},${p4}).replace(/\\s+/g, "\u00a0");`;
                     break;
                 case 'n':   // number
-                    code += `T13E.number(parseFloat(${p2}), ${p4 || 2}, ${p4 || 2}).replace(/\s+/g, "\u00a0");`;
+                    code += `T13E.number(parseFloat(${p2}), ${p4 || 2}, ${p4 || 2}).replace(/\\s+/g, "\u00a0");`;
                     break;
                 case 's':   // string
                     code += `${p2};`;
@@ -79,7 +79,7 @@ class T13E { // TemplateEngine
                     code += `${p2}+"\u00a0".concat(${p4})`;
                     break;
                 case 'P':   // plural
-                    code += `T13E.plural(${p2},${p4}).replace(/\s+/g, "\u00a0");`;
+                    code += `T13E.plural(${p2},${p4}).replace(/\\s+/g, "\u00a0");`;
                     break;
             }
 

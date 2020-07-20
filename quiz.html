@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <title>WebViewApp-Quiz</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        output {
+            font-size: medium;
+        }
+
+        input {
+            display: inline-block;
+            width: 56px;
+            height: 56px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="data">
+        <label>Frage: <output name="a"></output></label>
+        <div>
+            <input type="button" value="0" />
+            <input type="button" value="1" />
+            <input type="button" value="2" />
+            <input type="button" value="3" />
+            <input type="button" value="4" />
+            <input type="button" value="5" />
+            <input type="button" value="R" />
+        </div>
+    </form>
+</body>
+<script src="quiz.js"></script>
+<script>
+    "use strict";
+
+
+
+
+    const form = document.forms.data;
+    const output = document.querySelector('output')
+    const quiz = new Quiz();
+
+    let lowX = 1, lowY = 1, highX = 1, highY = 2;
+    quiz.then(function (db) { db.setRange(lowX, highX, lowY, highY); });
+
+    form.addEventListener('click', function (e) {
+        quiz.then(function (db) {
+            if (e.target.value == 'R') {
+                db.reset();
+            } else {
+                db.next(JSON.parse(output.value), e.target.value)
+                    .then(function (card) {
+                        output.value = JSON.stringify(card)
+                    })
+            }
+        })
+    })
+
+    quiz
+        .then(function (db) {
+            db.next(null, null, 1, 1)
+                .then(function (card) {
+                    output.value = JSON.stringify(card)
+                })
+        })
+        .catch(function (error) {
+            console.error(error)
+        })
+
+</script>
+
+</html>

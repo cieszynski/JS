@@ -3,7 +3,7 @@
 
 const prepare = function (obj, a) {
     obj.a = a + 1 || obj.a;
-    obj.i = 0;  // interval
+    obj.i = Math.random() * 10;  // interval
     return obj;
 }
 
@@ -42,7 +42,7 @@ const Quiz = class {
                 }
 
                 const store = this.db.createObjectStore(this.name, { keyPath: "a" });
-                store.createIndex("interval", ["i", "x", "y"], { unique: false });
+                store.createIndex("interval", "i", { unique: false });
                 store.transaction.oncomplete = function (e) {
 
                     fetch(`${this.name}.json`)
@@ -75,17 +75,19 @@ const Quiz = class {
     next(prev, grade) {
 
         return new Promise(function (resolve) {
-            const lowX = this.lowX || 0,
-                lowY = this.lowY || 0,
-                highX = this.highX || Number.MAX_VALUE,
-                highY = this.highY || Number.MAX_VALUE;
+            const lowX = this.lowX || 1,
+                lowY = this.lowY || 1,
+                highX = this.highX || 2,
+                highY = this.highY || 2;
+
             this.db
                 .transaction(this.name)
                 .objectStore(this.name)
                 .count()
                 .onsuccess = function (e) {
-                    if (prev, grade) {
-                        prev.i += (e.target.result) / (6 - grade);
+                    if (prev && grade) {
+                        let a = ((e.target.result / ((highX - lowX) ? 1 : 2)) / ((highY - lowY) ? 1 : 2));
+                        prev.i += a / (6 - grade);
                     } else prev = { a: 0, date: new Date() };
                     this.db
                         .transaction(this.name, "readwrite")
@@ -96,21 +98,18 @@ const Quiz = class {
                                 .transaction(this.name)
                                 .objectStore(this.name)
                                 .index("interval")
-                                .openCursor(IDBKeyRange.bound(
-                                    [0, lowX, lowY],
-                                    [Number.MAX_VALUE, highX, highY]))
+                                .openCursor()
                                 .onsuccess = function (e) {
-
+                                    let first = null
                                     if (e.target.result) {
-                                        var cursor = e.target.result, x = cursor.key[1], y = cursor.key[2];
-                                        if (!(lowX <= x && x <= highX)) {
+                                        const cursor = e.target.result;
+                                        const value = cursor.value;
+                                        if (!(lowX <= value.x && value.x <= highX)) {
                                             cursor.continue();
-                                        } else if (y < lowY) {
-                                            cursor.continue([x, lowY]);
-                                        } else if (y > highY) {
-                                            cursor.continue([x + 1, lowY]);
+                                        } else if (!(lowY <= value.y && value.y <= highY)) {
+                                            cursor.continue();
                                         } else {
-                                            resolve(e.target.result.value);// we got one!
+                                            resolve(e.target.result.value);
                                         }
                                     }
                                 }

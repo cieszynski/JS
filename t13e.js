@@ -24,7 +24,7 @@ class T13E { // TemplateEngine
     }
 
     static plural(num, obj) {
-        return `${num} ${obj[(num > 2) ? 2 : num]}`;
+        return `${num} ${obj[(num >= 2) ? 2 : num]}`;
     }
 
     static range(min, max, steps) {
@@ -45,7 +45,9 @@ class T13E { // TemplateEngine
     static currency(num, code) {
         return Intl.NumberFormat(T13E.locale, {
             style: "currency",
-            currency: code
+            currency: code,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         }).format(num);
     }
 
@@ -62,7 +64,7 @@ class T13E { // TemplateEngine
 
     static format(str, obj) {
 
-        const regex = /(\#\{([\w\/\+\-\*\.\)\(]+?)\}\:([A-z])\(([\w\""]*?)\))/g;
+        const regex = /(\#\{([\w\/\+\-\*\.\)\(]+?)\}\:([A-z])\(([\w\"\'"]*?)\))/g;
         const render = function (match, p1, p2, p3, p4, offset, string) {
             let code = '"use strict";return '
             switch (p3) {

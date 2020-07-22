@@ -36,15 +36,17 @@
 <script>
     "use strict";
 
-
-
-
     const form = document.forms.data;
     const output = document.querySelector('output')
     const quiz = new Quiz();
 
     let lowX = 1, lowY = 1, highX = 1, highY = 2;
-    quiz.then(function (db) { db.setRange(lowX, highX, lowY, highY); });
+    quiz.then(function (db) {
+        quiz.min_group = 1;
+        quiz.max_group = 2;
+        quiz.min_level = 1;
+        quiz.max_level = 2;
+    });
 
     form.addEventListener('click', function (e) {
         quiz.then(function (db) {

@@ -1,24 +1,25 @@
+// Copyright (C) 2020 Stephan Cieszynski
+// 
+// This file is part of JS.
+// 
+// JS is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// JS is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with JS.  If not, see <http://www.gnu.org/licenses/>.
 
 "use strict";
-
-const prepare = function (obj, a) {
-    obj.a = a + 1 || obj.a;
-    obj.i = Math.random() * 10;  // interval
-    return obj;
-}
-
-
 
 const Quiz = class {
 
     get name() { return 'Quiz'; }
-
-    setRange(lowX, highX, lowY, highY) {
-        this.lowX = lowX;
-        this.highX = highX;
-        this.lowY = lowY;
-        this.highY = highY;
-    }
 
     constructor(version) {
         return new Promise(function (resolve, reject) {
@@ -41,44 +42,53 @@ const Quiz = class {
                     }
                 }
 
-                const store = this.db.createObjectStore(this.name, { keyPath: "a" });
+                const store = this.db.createObjectStore(this.name, { keyPath: "id" });
                 store.createIndex("interval", "i", { unique: false });
                 store.transaction.oncomplete = function (e) {
-
-                    fetch(`${this.name}.json`)
-                        .then(function (response) {
-                            if (!response.ok) {
-                                throw Error(response.status);
-                            }
-                            return response.json();
-                        })
-                        .then(function (json) {
-                            const objectStore = this.db
-                                .transaction(this.name, "readwrite")
-                                .objectStore(this.name);
-
-                            objectStore.add({ a: 0, date: null });
-                            for (let a = 0; a < json.length; a++) {
-                                objectStore.add(prepare(json[a], a));
-                            }
-                            resolve(this);
-                        }.bind(this))
-                        .catch(function (e) {
-                            console.error('CATCH ' + e)
-                        });
+                    this.load(resolve, reject)
                 }.bind(this)
 
             }.bind(this)
         }.bind(this));
     }
 
+    prepare(obj, id) {
+        obj.id = id + 1 || obj.id
+        obj.i = Math.random() * 10;  // interval
+        return obj;
+    }
+
+    load(resolve, reject) {
+        fetch(`${this.name}.json`)
+            .then(function (response) {
+                if (!response.ok) {
+                    throw Error(response.status);
+                }
+                return response.json();
+            })
+            .then(function (json) {
+                const objectStore = this.db
+                    .transaction(this.name, "readwrite")
+                    .objectStore(this.name);
+
+                objectStore.add({ id: 0, date: null });
+                for (let a = 0; a < json.length; a++) {
+                    objectStore.add(this.prepare(json[a], a));
+                }
+                resolve(this);
+            }.bind(this))
+            .catch(function (e) {
+                console.error('CATCH ' + e)
+            });
+    }
+
     next(prev, grade) {
 
         return new Promise(function (resolve) {
-            const lowX = this.lowX || 1,
-                lowY = this.lowY || 1,
-                highX = this.highX || 2,
-                highY = this.highY || 2;
+            const min_group = this.min_group || 1,
+                min_level = this.min_level || 1,
+                max_group = this.max_group || 2,
+                max_level = this.max_level || 2;
 
             this.db
                 .transaction(this.name)
@@ -86,9 +96,9 @@ const Quiz = class {
                 .count()
                 .onsuccess = function (e) {
                     if (prev && grade) {
-                        let a = ((e.target.result / ((highX - lowX) ? 1 : 2)) / ((highY - lowY) ? 1 : 2));
+                        let a = ((e.target.result / ((max_group - min_group) ? 1 : 2)) / ((max_level - min_level) ? 1 : 2));
                         prev.i += a / (6 - grade);
-                    } else prev = { a: 0, date: new Date() };
+                    } else prev = { id: 0, date: new Date() };
                     this.db
                         .transaction(this.name, "readwrite")
                         .objectStore(this.name)
@@ -104,9 +114,9 @@ const Quiz = class {
                                     if (e.target.result) {
                                         const cursor = e.target.result;
                                         const value = cursor.value;
-                                        if (!(lowX <= value.x && value.x <= highX)) {
+                                        if (!(min_group <= value.group && value.group <= max_group)) {
                                             cursor.continue();
-                                        } else if (!(lowY <= value.y && value.y <= highY)) {
+                                        } else if (!(min_level <= value.level && value.level <= max_level)) {
                                             cursor.continue();
                                         } else {
                                             resolve(e.target.result.value);
@@ -128,7 +138,7 @@ const Quiz = class {
                 .onsuccess = function (e) {
                     const cursor = e.target.result;
                     if (cursor) {
-                        cursor.update(prepare(cursor.value));
+                        cursor.update(this.prepare(cursor.value));
                         cursor.continue();
                     } else resolve(true);
                 }.bind(this)

@@ -64,7 +64,7 @@ class T13E { // TemplateEngine
 
     static format(str, obj) {
 
-        const regex = /(\#\{([\w\/\+\-\*\.\)\(]+?)\}\:([A-z])\(([\w\"\'"]*?)\))/g;
+        const regex = /([\#]\{([\w\/\+\-\*\.\)\(\[\]]+?)\}\:([A-z])\(([\w\"\'"]*?)\))/g;
         const render = function (match, p1, p2, p3, p4, offset, string) {
             let code = '"use strict";return '
             switch (p3) {

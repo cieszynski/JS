@@ -1,42 +1,42 @@
 [
     {
-        "x": 1,
-        "y": 2
+        "group": 1,
+        "level": 2
     },
     {
-        "x": 1,
-        "y": 2
+        "group": 1,
+        "level": 2
     },
     {
-        "x": 2,
-        "y": 1
+        "group": 2,
+        "level": 1
     },
     {
-        "x": 2,
-        "y": 1
+        "group": 2,
+        "level": 1
     },
     {
-        "x": 2,
-        "y": 2
+        "group": 2,
+        "level": 2
     },
     {
-        "x": 2,
-        "y": 2
+        "group": 2,
+        "level": 2
     },
     {
-        "x": 1,
-        "y": 1
+        "group": 1,
+        "level": 1
     },
     {
-        "x": 1,
-        "y": 1
+        "group": 1,
+        "level": 1
     },
     {
-        "x": 2,
-        "y": 1
+        "group": 2,
+        "level": 1
     },
     {
-        "x": 2,
-        "y": 2
+        "group": 2,
+        "level": 2
     }
 ]

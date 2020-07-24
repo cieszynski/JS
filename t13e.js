@@ -32,7 +32,7 @@ class T13E { // TemplateEngine
     }
 
     static arange(arr) {
-        return arr[Math.floor(Math.random() * arr.length)];
+        return arguments[(Math.floor(Math.random() * arguments.length))];
     }
 
     static number(num, min, max) {
@@ -90,5 +90,38 @@ class T13E { // TemplateEngine
             return new (Function.bind.apply(Function, args))().apply(null, values);
         }
         return str.replace(regex, render);
+    }
+
+    static process(template, node) {
+        const source = function (obj) {
+            //obj = JSON.stringify(obj).replace(/"/g, '');
+            const funcs = {}
+            funcs.range = T13E.range;
+            funcs.arange = T13E.arange;
+
+            const values = Object.keys(funcs).map(function (key) { return funcs[key] });
+            const args = [null].concat(Object.keys(funcs)).concat(`"use strict"; return ${obj};`);
+            return new (Function.bind.apply(Function, args))().apply(null, values);
+        }(template.dataset.source);
+
+        node.innerHTML = "";
+        node.appendChild(template.content.cloneNode(true));
+
+        for (const value of node.querySelectorAll('out')) {
+
+            value.textContent = function (value, obj) {
+                let str = value.textContent;
+
+                obj.currency = T13E.currency;
+                obj.number = T13E.number;
+                obj.plural = T13E.plural;
+
+                const values = Object.keys(obj).map(function (key) { return obj[key] });
+                const args = [null]
+                    .concat(Object.keys(obj))
+                    .concat(`"use strict"; return ${str};`);
+                return new (Function.bind.apply(Function, args))().apply(null, values);
+            }(value, source);
+        }
     }
 }

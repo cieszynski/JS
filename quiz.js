@@ -82,6 +82,37 @@ const Quiz = class {
             });
     }
 
+    effort() {
+        return new Promise(function (resolve) {
+            const min_group = this.min_group || this.max_group;
+            const result = { date: 0, effort: [] };
+            this.db
+                .transaction(this.name)
+                .objectStore(this.name)
+                .get(0)
+                .onsuccess = function (e) {
+                    result.date = e.target.result.date;
+                    this.db
+                        .transaction(this.name)
+                        .objectStore(this.name)
+                        .index("interval")
+                        .openCursor()
+                        .onsuccess = function (e) {
+                            if (e.target.result) {
+                                const cursor = e.target.result;
+                                const value = cursor.value;
+                                if (value.group == min_group) {
+                                    result.effort.push(value.e || 0)
+                                }
+                                cursor.continue();
+                            } else {
+                                resolve(result);
+                            }
+                        }
+                }.bind(this);
+        }.bind(this));
+    }
+
     next(prev, grade) {
 
         return new Promise(function (resolve) {
@@ -98,6 +129,7 @@ const Quiz = class {
                     if (prev && grade) {
                         let a = ((e.target.result / ((max_group - min_group) ? 1 : 2)) / ((max_level - min_level) ? 1 : 2));
                         prev.i += a / (6 - grade);
+                        prev.e = grade;
                     } else prev = { id: 0, date: new Date() };
                     this.db
                         .transaction(this.name, "readwrite")

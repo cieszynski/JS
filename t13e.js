@@ -23,8 +23,8 @@ class T13E { // TemplateEngine
         return navigator.language;
     }
 
-    static plural(num, obj) {
-        return `${num} ${obj[(num >= 2) ? 2 : num]}`;
+    static plural(num, obj, min, max) {
+        return `${T13E.number(num, min, max)} ${obj[(num >= 2) ? 2 : Math.trunc(num)]}`;
     }
 
     static range(min, max, steps) {
@@ -36,6 +36,7 @@ class T13E { // TemplateEngine
     }
 
     static number(num, min, max) {
+        //num = parseFloat(num);
         return Intl.NumberFormat(T13E.locale, {
             minimumFractionDigits: min,
             maximumFractionDigits: max
@@ -107,21 +108,32 @@ class T13E { // TemplateEngine
         node.innerHTML = "";
         node.appendChild(template.content.cloneNode(true));
 
-        for (const value of node.querySelectorAll('out')) {
+        Array.prototype.forEach.call(node.querySelectorAll('[t13e]'), function (value) {
 
             value.textContent = function (value, obj) {
                 let str = value.textContent;
 
+                obj.lt = function(a, b, c, d) {
+                    return (a < b) ? c : d;
+                }               
+                obj.gt = function(a, b, c, d) {
+                    return (a > b) ? c : d;
+                }
                 obj.currency = T13E.currency;
                 obj.number = T13E.number;
                 obj.plural = T13E.plural;
-
+                obj.xlink = function (k, v) {
+                    value.setAttributeNS("http://www.w3.org/1999/xlink", k, `#${v.toLowerCase()}`);
+                }
+                obj.attr = function (k, v) {
+                    value.setAttribute(k, v);
+                }
                 const values = Object.keys(obj).map(function (key) { return obj[key] });
                 const args = [null]
                     .concat(Object.keys(obj))
                     .concat(`"use strict"; return ${str};`);
-                return new (Function.bind.apply(Function, args))().apply(null, values);
+                return new (Function.bind.apply(Function, args))().apply(value, values);
             }(value, source);
-        }
+        });
     }
 }

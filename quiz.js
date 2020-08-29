@@ -32,8 +32,9 @@ const Quiz = class {
             req_open.onupgradeneeded = function (e) {
                 req_open.onsuccess = null;
                 this.db = e.target.result;
+                
                 if (e.oldVersion > 0) {
-                    try { db.deleteObjectStore(this.name); }
+                    try { this.db.deleteObjectStore(this.name); }
                     catch (ex) {
                         reject(new ErrorEvent('DOMException', {
                             message: ex.message,

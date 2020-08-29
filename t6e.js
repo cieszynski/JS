@@ -32,6 +32,7 @@ class t6e {
     }
 
     static run(str, obj) {
+        const regex = /{{(.*?)}}/g;
         return str.replace(regex, function (match, exp) {
             obj.rand = t6e.rand;
             obj.toFixed = t6e.toFixed;

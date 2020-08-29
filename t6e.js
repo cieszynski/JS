@@ -23,10 +23,11 @@ class t6e {
         return Math.floor(Math.random() * (max - min) / (steps || 1)) * (steps || 1) + min;
     }
 
-    static toFixed(num, digs) {
+    static toFixed(num, digs, grp) {
         return Intl.NumberFormat(navigator.language, {
             minimumFractionDigits: digs || 0,
-            maximumFractionDigits: digs || 0
+            maximumFractionDigits: digs || 0,
+            useGrouping: grp || 0
         }).format(num);
     }
 
